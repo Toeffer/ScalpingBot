@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling==1.28.0"]
+requires = ["hatchling==1.31.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -11,7 +11,7 @@ requires-python = ">=3.12"
 license = { text = "Proprietary" }
 authors = [{ name = "ScalpingBot contributors" }]
 dependencies = [
-    "pydantic==2.12.5",
+    "pydantic==2.13.4",
     "PyYAML==6.0.3",
 ]
 
@@ -22,7 +22,7 @@ trading-cli = "trading_system.operations.cli:main"
 dev = [
     "bandit[toml]>=1.8.6,<2",
     "detect-secrets>=1.5.0,<2",
-    "mypy>=1.18.2,<2",
+    "mypy>=1.18.2,<3",
     "pip-audit>=2.9.0,<3",
     "pre-commit>=4.3.0,<5",
     "pytest>=9.0.2,<10",
