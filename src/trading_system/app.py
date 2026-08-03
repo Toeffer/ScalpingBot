@@ -66,6 +66,11 @@ class TradingApplication:
         """Return the explicit lifecycle state."""
         return self._state
 
+    @property
+    def kill_switch(self) -> FileKillSwitchStore:
+        """Return the durable kill-switch store for read-only operator tooling."""
+        return self._kill_switch
+
     def start(self) -> SystemState:
         """Enter simulation readiness only after all Phase-0 controls pass."""
         try:

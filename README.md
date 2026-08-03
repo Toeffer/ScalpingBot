@@ -39,11 +39,34 @@ Run the safe bootstrap from PowerShell:
 
 ```powershell
 $env:TRADING_ENV = "simulation"
-uv run trading-cli --environment-config config/simulation.example.yaml
+uv run trading-cli start --environment-config config/simulation.example.yaml
 ```
 
 The result reports READY_SIMULATION and explicitly reports that broker
 connectivity is false. There is intentionally no command for live startup.
+
+## Operator commands
+
+`status` is read-only: it bootstraps configuration, logging, and the
+kill-switch store, then reports environment and kill-switch state without
+starting the application. It works even when `start` would be denied, which is
+exactly when status is needed most.
+
+```powershell
+uv run trading-cli status --environment-config config/simulation.example.yaml
+```
+
+`halt` durably latches a kill switch so a subsequent `start` is refused until
+an operator investigates:
+
+```powershell
+uv run trading-cli halt --scope global --reason "<text>" --actor "<who>"
+```
+
+There is deliberately no CLI command to clear a latch in Phase 0: Phase 0 has
+no operator authentication, so clearing a latch must stay a deliberate
+out-of-band action. That out-of-band procedure is documented in
+[`deploy/runbooks/kill-switch.md`](deploy/runbooks/kill-switch.md).
 
 ## Configuration
 

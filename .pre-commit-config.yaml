@@ -44,4 +44,10 @@ repos:
         language: system
         pass_filenames: false
         stages: [pre-push]
+      - id: verify-release
+        name: release verification
+        entry: uv run python scripts/verify_release.py
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
 

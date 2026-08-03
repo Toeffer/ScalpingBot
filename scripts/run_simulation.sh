@@ -2,5 +2,5 @@
 set -euo pipefail
 
 export TRADING_ENV=simulation
-exec uv run trading-cli --environment-config config/simulation.example.yaml
+exec uv run trading-cli start --environment-config config/simulation.example.yaml
 

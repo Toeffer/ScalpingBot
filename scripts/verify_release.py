@@ -39,6 +39,17 @@ def _verify_dependencies() -> list[str]:
     return failures
 
 
+def _verify_agent_contract_mirrors() -> list[str]:
+    failures: list[str] = []
+    contract = REPOSITORY_ROOT / "AGENT.md"
+    contract_bytes = contract.read_bytes()
+    for mirror_name in ("AGENTS.md", "CLAUDE.md"):
+        mirror = REPOSITORY_ROOT / mirror_name
+        if not mirror.is_file() or mirror.read_bytes() != contract_bytes:
+            failures.append(f"{mirror_name} does not match AGENT.md")
+    return failures
+
+
 def _verify_configurations() -> list[str]:
     failures: list[str] = []
     configure_decimal_context()
@@ -72,6 +83,7 @@ def main() -> int:
     ):
         failures.append("configuration schema is missing or stale")
     failures.extend(_verify_configurations())
+    failures.extend(_verify_agent_contract_mirrors())
     if failures:
         for failure in failures:
             print(f"FAIL: {failure}")

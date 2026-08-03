@@ -25,12 +25,19 @@ repository. Read the relevant section **before** changing the corresponding
 code. Section 6 below is the routing table.
 
 If your agent harness looks for `AGENTS.md` or `CLAUDE.md` rather than
-`AGENT.md`, symlink it. Do not copy it:
+`AGENT.md`, symlink it where the platform supports it. Do not copy it:
 
 ```bash
 ln -s AGENT.md AGENTS.md
 ln -s AGENT.md CLAUDE.md
 ```
+
+Windows checkouts with `core.symlinks=false` cannot use symlinks: a committed
+symlink checks out as a plain text file, and the contract silently disappears
+from agent context. On those platforms the three files are byte-identical copies
+instead, and their identity is enforced by `scripts/verify_release.py`, which
+fails the build on any divergence. Never edit `AGENTS.md` or `CLAUDE.md`
+directly — edit `AGENT.md` and mirror the change to both.
 
 Duplicated safety rules drift apart, and a stale safety rule is worse than no
 safety rule.

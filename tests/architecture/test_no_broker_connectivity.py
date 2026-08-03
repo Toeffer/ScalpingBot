@@ -1,4 +1,16 @@
-"""Phase 0 must not gain a hidden broker connection path."""
+"""Phase 0 must not gain a hidden broker connection path.
+
+This file is PHASE-0-SCOPED. It asserts the absolute absence of any broker
+package required by ADR 0001 (`docs/decisions/0001-phase-0-boundary.md`), and
+it is expected to be removed when Phase 1 introduces the read-only adapter
+under `src/trading_system/broker/`. Removing it at that point is legitimate;
+silently weakening it is not.
+
+From Phase 1 onward the enforcing boundary is `test_import_layering.py`, which
+is permanent: it confines broker imports to `src/trading_system/broker/` instead
+of banning them outright. Do not delete this file without confirming that the
+layering test is present and passing.
+"""
 
 import ast
 import tomllib
