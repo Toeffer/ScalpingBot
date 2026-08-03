@@ -4,10 +4,17 @@ This rule is PERMANENT: it must survive every phase of the project, not just
 Phase 0. It is the durable successor to the Phase-0-only absolute ban in
 `test_no_broker_connectivity.py`, which forbids broker package imports
 anywhere in `src` and is expected to be deleted once Phase 1 introduces the
-real broker adapter under `src/trading_system/broker/`. From that point on,
+real broker adapter under `src/trading_system/brokers/`. From that point on,
 this file is what enforces the boundary: only modules inside
-`src/trading_system/broker/` may import a broker package. Every other module
+`src/trading_system/brokers/` may import a broker package. Every other module
 under `src` must not.
+
+The permitted root is `brokers/` — plural — because that is the path
+`docs/architecture.md` §19 prescribes (`brokers/ibkr/adapter.py` and its
+siblings). Keep the two in step: if this constant and §19 disagree, correct
+code written against §19 is reported as a boundary violation, and the tempting
+repair is to weaken this test rather than fix the path. AGENT.md rule 16
+forbids that repair, so the mismatch must not be allowed to arise.
 """
 
 import ast
@@ -16,7 +23,7 @@ from pathlib import Path
 from conftest import REPOSITORY_ROOT
 
 _PROHIBITED_BROKER_PACKAGES = {"ibapi", "ib_async", "ib_insync"}
-_BROKER_PACKAGE_ROOT = REPOSITORY_ROOT / "src" / "trading_system" / "broker"
+_BROKER_PACKAGE_ROOT = REPOSITORY_ROOT / "src" / "trading_system" / "brokers"
 
 
 def _imports_broker_package(path: Path) -> bool:

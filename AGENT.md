@@ -160,43 +160,72 @@ weighed against convenience.
 
 Everything below runs from the repository root. Dependency management is `uv`.
 
+This section is split into what works **in the current phase** and what the
+architecture reserves for **a later phase**. Both halves are listed because the
+command names are part of the contract, but only the first half is executable
+today. A command in the second half fails with "no such file" or "no such
+command" — that is the expected result, not a broken checkout. Every command in
+the first half is covered by `tests/architecture/test_documented_commands.py`,
+which fails the build if this section drifts from the real interface.
+
+### 3.1 Available now
+
 ```bash
 # --- setup -----------------------------------------------------------------
 uv sync --frozen                    # install exactly what uv.lock pins
 uv lock --upgrade-package <name>    # the only sanctioned way to move a version
-pre-commit install                  # secret scanning + formatting on commit
+uv run pre-commit install           # secret scanning + formatting on commit
 
 # --- quality gates (all must pass before merge) ----------------------------
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy --strict src
 uv run pytest
-uv run pip-audit
-uv run python scripts/verify_release.py   # config schema, migrations, licences
+uv run bandit -c pyproject.toml -r src scripts
+uv run pip-audit --skip-editable
+uv run pre-commit run detect-secrets --all-files
+uv run python scripts/verify_secret_scan.py         # scanner rejects a probe
+uv run python scripts/generate_config_schema.py --check
+uv run python scripts/verify_release.py   # config schema, licences, mirrors
 
 # --- tests by tier ---------------------------------------------------------
 uv run pytest tests/unit                  # fast, no I/O, no broker
-uv run pytest tests/replay                # deterministic end-to-end fixtures
 uv run pytest tests/security              # redaction, gates, authorization
-uv run pytest tests/integration           # fake broker transport, real database
+uv run pytest tests/architecture          # import boundaries, contract mirrors
 uv run pytest --lf -x                     # last failures, stop on first
 
 # --- running the system ----------------------------------------------------
 ./scripts/run_simulation.sh               # no broker connection at all
-./scripts/run_paper.sh                    # requires paper Gateway + paper DB
-uv run python scripts/reconcile.py --dry-run
-uv run trading-cli status
-uv run trading-cli halt --scope global --reason "<text>"
+uv run trading-cli status  --environment-config config/simulation.example.yaml
+uv run trading-cli start   --environment-config config/simulation.example.yaml
+uv run trading-cli halt --scope global --reason "<text>" --actor "<who>"
+```
 
-# --- database --------------------------------------------------------------
+`--actor` is required on `halt`: an unattributed latch is not an audit record.
+`--environment-config` may be omitted, in which case it defaults to
+`config/<TRADING_ENV>.example.yaml`; state it explicitly under incident
+conditions so the target environment is never inferred.
+
+### 3.2 Reserved for a later phase — not executable today
+
+```bash
+./scripts/run_paper.sh                    # requires paper Gateway + paper DB
+uv run pytest tests/replay                # deterministic end-to-end fixtures
+uv run pytest tests/integration           # fake broker transport, real database
+uv run python scripts/reconcile.py --dry-run
 uv run alembic upgrade head
 uv run alembic downgrade -1               # every migration needs a tested down
 uv run python scripts/backup_verify.py    # restore into a scratch database
 ```
 
-CI runs the quality-gate block plus secret scanning, static security analysis,
-migration validation, the replay regression suite, a license policy check, and a
-container scan when containers are in use.
+`scripts/run_paper.sh` exists and is executable, but paper startup is denied in
+code until the phase that introduces broker connectivity. It exits non-zero by
+design. See `docs/operations/paper-readiness.md` for what must land first.
+
+CI runs the §3.1 quality-gate block plus secret scanning, static security
+analysis, and a license policy check. Migration validation, the replay
+regression suite, and a container scan join CI when the corresponding phase
+introduces migrations, replay fixtures, and containers.
 
 There is **no** command that starts live trading from a shell. Live enablement
 is the multi-gate procedure in §15.4 and requires an operator token.
