@@ -12,7 +12,31 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Structured log records now go to **stderr**; a command's result stays on
+  stdout. `trading-cli start` previously wrote a log line and its result to the
+  same stream, so `trading-cli start | jq -r .state` could read the log record
+  as the answer. `logging.destination` changes from `stdout` to `stderr`
+  accordingly, and the checked-in schema is regenerated. Under `systemd`
+  (§16.3) both streams reach the journal, so the daemon case is unaffected.
+
 ### Added
+
+- `trading-cli status --history` reports the append-only kill-switch audit
+  trail — `action`, `actor`, `reason`, `scope`, `target_id`, `record_id`, and
+  `occurred_at` per entry, newest last. Bounded by `--history-limit`
+  (default 20) and reported with `total`, `shown`, and `truncated` so a slice
+  is never mistaken for the complete record. Read-only; there is still no
+  command that clears a latch. Previously the audit history could only be read
+  by writing Python against `store.snapshot().history`, which is not something
+  to ask of an operator working an incident.
+- `docs/operations/paper-readiness.md` §6.1 — an executable checklist for
+  verifying the §8.8 broker error-code table: the three official sources, the
+  23 codes to confirm, what to check for each, two known traps, and a
+  requirement to record the result as an ADR. The check itself is still
+  outstanding; the environments this repository has been worked in could not
+  reach the IBKR documentation hosts.
 
 - `CONTRIBUTING.md`, `SECURITY.md`, `CHANGELOG.md`, and
   `.github/PULL_REQUEST_TEMPLATE.md`.

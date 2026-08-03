@@ -148,7 +148,7 @@ class LoggingConfig(StrictModel):
     """Logging controls whose security features cannot be disabled."""
 
     level: LogLevel = LogLevel.INFO
-    destination: Literal["stdout"] = "stdout"
+    destination: Literal["stderr"] = "stderr"
     format: Literal["json"] = "json"
     redaction_enabled: Literal[True] = True
 

@@ -29,6 +29,7 @@ from conftest import REPOSITORY_ROOT
 from trading_system.operations.cli import _parser
 
 _INVOCATION = re.compile(r"uv run trading-cli\s+(?P<arguments>.+)")
+_SHELL_OPERATORS = frozenset({"<", "<<", ">", ">>", "|", "||", "&", "&&", ";"})
 _SEARCHED_SUFFIXES = (".md", ".sh")
 _SEARCHED_ROOTS = ("AGENT.md", "AGENTS.md", "CLAUDE.md", "README.md", "deploy", "docs", "scripts")
 _EXECUTABLE_SCRIPTS = ("scripts/run_simulation.sh", "scripts/run_paper.sh")
@@ -104,11 +105,33 @@ def test_documented_invocations_exist_to_be_checked() -> None:
     assert len(_documented_invocations()) >= _MINIMUM_DOCUMENTED_INVOCATIONS
 
 
+def _cli_tokens(arguments: str) -> list[str]:
+    """Tokenize documented arguments, dropping anything the shell would consume.
+
+    A documented command may end in a redirection or a pipeline
+    (`... 2>engine.log`, `... | jq`). Those belong to the shell, not to the
+    interface, so they are removed before parsing.
+
+    `punctuation_chars` is what makes this safe: it splits an *unquoted*
+    operator into its own token while leaving a quoted one alone. That
+    distinction matters here, because the documented placeholder
+    `--reason "<text>"` would otherwise be mistaken for an input redirection.
+    """
+    lexer = shlex.shlex(arguments, posix=True, punctuation_chars=True)
+    lexer.whitespace_split = True
+    tokens = list(lexer)
+    for index, token in enumerate(tokens):
+        if token in _SHELL_OPERATORS:
+            # `2>file` lexes as ('2', '>', 'file'); drop the file descriptor too.
+            end = index - 1 if index and tokens[index - 1].isdigit() else index
+            return tokens[:end]
+    return tokens
+
+
 @pytest.mark.parametrize(("location", "arguments"), _documented_invocations())
 def test_documented_invocation_parses(location: str, arguments: str) -> None:
-    tokens = shlex.split(arguments, comments=True)
     try:
-        _parser().parse_args(tokens)
+        _parser().parse_args(_cli_tokens(arguments))
     except SystemExit as exit_signal:
         pytest.fail(
             f"documented command at {location} is rejected by the CLI: "

@@ -106,8 +106,19 @@ not a broken script.
 
 A refusal prints a single redacted JSON object with `status`, `error_type`, and
 `message`. Startup failures additionally emit a `CRITICAL` structured log
-record. Both go to stdout; if you are piping the output, parse it line by line
-rather than as one document.
+record.
+
+**Streams are separate.** A command's result goes to stdout; structured log
+records go to stderr. So `trading-cli status | jq` is safe — stdout is exactly
+one JSON document and never has a log line interleaved. Redirect stderr to
+follow the log instead:
+
+```shell
+uv run trading-cli start --environment-config config/simulation.example.yaml 2>engine.log
+```
+
+Under `systemd` both streams reach the journal (`docs/architecture.md` §16.3),
+so nothing is lost by the split.
 
 ## Operator commands
 
@@ -119,6 +130,17 @@ exactly when status is needed most.
 ```powershell
 uv run trading-cli status --environment-config config/simulation.example.yaml
 ```
+
+`status --history` additionally reports the append-only audit trail — who
+latched or cleared what, when, and why:
+
+```powershell
+uv run trading-cli status --history --environment-config config/simulation.example.yaml
+```
+
+Output is newest last and bounded by `--history-limit` (default 20). Check the
+`truncated` field before concluding anything: `true` means you are seeing the
+most recent slice, not the whole record.
 
 `halt` durably latches a kill switch so a subsequent `start` is refused until
 an operator investigates:

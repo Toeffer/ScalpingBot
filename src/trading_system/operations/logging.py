@@ -153,12 +153,18 @@ def configure_structured_logging(
     artifact_digest: str,
     stream: IO[str] | None = None,
 ) -> StructuredLogger:
-    """Create an isolated logger with non-optional JSON redaction."""
+    """Create an isolated logger with non-optional JSON redaction.
+
+    Records go to stderr so that stdout carries only a command's result. An
+    operator piping `trading-cli status` into a JSON tool must not have a log
+    line appear in the middle of the answer. Under `systemd` (§16.3) both
+    streams reach the journal, so the daemon case loses nothing.
+    """
     logger = logging.getLogger(f"trading_system.{service}")
     logger.handlers.clear()
     logger.propagate = False
     logger.setLevel(config.level.value)
-    handler = logging.StreamHandler(stream if stream is not None else sys.stdout)
+    handler = logging.StreamHandler(stream if stream is not None else sys.stderr)
     handler.setFormatter(
         RedactingJsonFormatter(
             service=service,

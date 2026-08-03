@@ -132,7 +132,20 @@ Re-run `status` (step 2) and confirm:
 - The scope you cleared no longer appears in `active`.
 - `revision` incremented by one from the value you observed in step 4.
 
-The CLI's `status` output only surfaces active latches, not history. Full
-audit inspection — including the `cleared` entry the `.clear()` call in step 6
-just appended — currently requires reading `store.snapshot().history`
-directly; there is no CLI command that prints it today.
+To see the `cleared` entry the `.clear()` call in step 6 just appended — and
+the whole latch/clear timeline that led here — add `--history`:
+
+```powershell
+uv run trading-cli status --history --environment-config config/simulation.example.yaml
+```
+
+This is read-only, like the rest of `status`, and it works when `start` would
+be denied. Each entry carries `action` (`latched` or `cleared`), `actor`,
+`reason`, `scope`, `target_id`, `record_id`, and `occurred_at`. Entries are in
+append order, so the newest is last and the output reads as a timeline.
+
+`--history-limit` bounds the output and defaults to 20. Always read the
+`total`, `shown`, and `truncated` fields before drawing a conclusion: if
+`truncated` is `true` you are looking at the most recent slice, not the
+complete record, and the entry that explains the incident may be older than
+what you are seeing. Raise `--history-limit` rather than assuming.

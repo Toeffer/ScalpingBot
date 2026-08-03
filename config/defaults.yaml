@@ -5,7 +5,7 @@ runtime:
   live_enabled: false
 logging:
   level: INFO
-  destination: stdout
+  destination: stderr
   format: json
   redaction_enabled: true
 kill_switch:

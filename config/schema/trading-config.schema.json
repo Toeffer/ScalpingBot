@@ -167,8 +167,8 @@
       "description": "Logging controls whose security features cannot be disabled.",
       "properties": {
         "destination": {
-          "const": "stdout",
-          "default": "stdout",
+          "const": "stderr",
+          "default": "stderr",
           "title": "Destination",
           "type": "string"
         },

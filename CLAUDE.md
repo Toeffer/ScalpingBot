@@ -198,6 +198,7 @@ uv run pytest --lf -x                     # last failures, stop on first
 ./scripts/run_simulation.sh               # no broker connection at all
 uv run trading-cli status  --environment-config config/simulation.example.yaml
 uv run trading-cli start   --environment-config config/simulation.example.yaml
+uv run trading-cli status --history        # who latched what, when, and why
 uv run trading-cli halt --scope global --reason "<text>" --actor "<who>"
 ```
 
@@ -205,6 +206,11 @@ uv run trading-cli halt --scope global --reason "<text>" --actor "<who>"
 `--environment-config` may be omitted, in which case it defaults to
 `config/<TRADING_ENV>.example.yaml`; state it explicitly under incident
 conditions so the target environment is never inferred.
+
+`status --history` reads the append-only kill-switch audit trail, newest last,
+bounded by `--history-limit` (default 20) and reporting `total`, `shown`, and
+`truncated` so a slice is never mistaken for the whole record. It is read-only,
+like the rest of `status`. There is still no command that clears a latch.
 
 ### 3.2 Reserved for a later phase — not executable today
 

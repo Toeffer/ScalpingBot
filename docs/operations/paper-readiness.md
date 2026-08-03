@@ -137,7 +137,9 @@ before any command can clear a latch or change a limit (§15.9).
 **Broker error table is a draft.** Architecture §28 flags the §8.8 message-code
 table as unverified against current IBKR documentation. Verify it against the
 live reference before Phase 1 depends on it — misclassifying an error as
-retryable is how duplicate exposure gets created.
+retryable is how duplicate exposure gets created. The checklist is in §6.1
+below; it has not been run, because the environments this repository has been
+worked in so far could not reach the IBKR documentation hosts.
 
 **Kill-switch history has no reader.** `status` prints active latches only.
 Audit inspection requires reading `store.snapshot().history` in Python. An
@@ -167,6 +169,48 @@ operator working an incident should not have to write code to see what happened.
    coordinator netting opposing targets into one broker target.
 
 Do not reorder 3 before 2, or 5 before 4.
+
+### 6.1 Verifying the §8.8 error table
+
+Step 1 above is the cheapest item on this list and blocks the most. It needs
+nothing but a browser and an hour, and it has **not been done**.
+
+Sources, all listed in architecture §26:
+
+- System connectivity message codes:
+  <https://www.interactivebrokers.com/docs/tws-api/ref/system-message-codes>
+- The consolidated message-code reference:
+  <https://interactivebrokers.github.io/tws-api/message_codes.html>
+- The TWS API changelog, for codes added or changed since:
+  <https://www.interactivebrokers.com/docs/tws-api/changelog>
+
+For each of the 23 codes in the §8.8 table — 100, 103, 104, 105, 106, 200, 201,
+202, 321, 354, 420, 512, 1100, 1101, 1102, 2103, 2104, 2105, 2106, 2157, 2158,
+10089, 10197 — confirm three things:
+
+1. **The code still exists** and its official description still matches the
+   behavior the table's Action column assumes.
+2. **The category is right**, with particular attention to anything the table
+   treats as recoverable. An error wrongly classified as `TRANSIENT` or
+   `PACING` invites a retry, and a retried `placeOrder` is how duplicate
+   exposure is created (AGENT.md rule 5).
+3. **Nothing new belongs in the table.** Codes added since the table was
+   written currently fall through to `UNKNOWN`. That is the safe default and
+   not a bug — but a frequently-seen `UNKNOWN` is a gap, not a mystery.
+
+Two known traps to check rather than assume:
+
+- 2157/2158 (sec-def data farm) were added in a later Gateway build than the
+  other 21xx codes, and arrive with a farm-name suffix — `2157` is not the
+  whole message. Match on the code, never on the text.
+- 202 means the order was cancelled, but the table already warns that the
+  confirmation must come from `orderStatus`, not from the message text. Verify
+  that this is still true before Phase 3 relies on it.
+
+Record the result as an ADR under `docs/decisions/`: the date checked, the
+documentation revision, every correction made, and every code confirmed
+unchanged. "We checked and it was fine" is only useful if a later reader can
+tell *when* fine was, and against what.
 
 ## 7. Before the first paper session
 

@@ -15,7 +15,9 @@ from trading_system.app import TradingApplication
 from trading_system.config import Environment, selected_environment
 from trading_system.exceptions import TradingSystemError
 from trading_system.operations.redaction import redact
-from trading_system.risk.kill_switch import KillSwitchScope
+from trading_system.risk.kill_switch import KillSwitchDocument, KillSwitchScope
+
+DEFAULT_HISTORY_LIMIT = 20
 
 
 def _common_arguments() -> argparse.ArgumentParser:
@@ -35,6 +37,17 @@ def _common_arguments() -> argparse.ArgumentParser:
     return parent
 
 
+def _positive_int(value: str) -> int:
+    """Reject a non-positive limit rather than silently showing nothing."""
+    try:
+        parsed = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("must be an integer") from exc
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("must be at least 1")
+    return parsed
+
+
 def _parser() -> argparse.ArgumentParser:
     common = _common_arguments()
     parser = argparse.ArgumentParser(description="Phase-0 trading-system safety bootstrap")
@@ -45,10 +58,21 @@ def _parser() -> argparse.ArgumentParser:
         parents=[common],
         help="bootstrap configuration and enter the safe startup state",
     )
-    subparsers.add_parser(
+    status_parser = subparsers.add_parser(
         "status",
         parents=[common],
         help="report environment and kill-switch status without starting",
+    )
+    status_parser.add_argument(
+        "--history",
+        action="store_true",
+        help="also report the append-only kill-switch audit history",
+    )
+    status_parser.add_argument(
+        "--history-limit",
+        type=_positive_int,
+        default=DEFAULT_HISTORY_LIMIT,
+        help=f"most recent history entries to report (default {DEFAULT_HISTORY_LIMIT})",
     )
     halt_parser = subparsers.add_parser(
         "halt",
@@ -115,6 +139,34 @@ def _run_start(arguments: argparse.Namespace) -> int:
     return 0
 
 
+def _history_payload(document: KillSwitchDocument, limit: int) -> dict[str, object]:
+    """Summarize the append-only audit trail, newest last.
+
+    Entries stay in the order they were appended so the output reads as a
+    timeline. `total` and `truncated` are reported alongside, because an
+    operator must be able to tell a complete history from a slice of one.
+    """
+    entries = document.history[-limit:]
+    return {
+        "total": len(document.history),
+        "shown": len(entries),
+        "truncated": len(entries) < len(document.history),
+        "entries": [
+            {
+                "action_id": str(entry.action_id),
+                "action": entry.action.value,
+                "record_id": str(entry.record_id),
+                "scope": entry.scope.value,
+                "target_id": entry.target_id,
+                "reason": entry.reason,
+                "actor": entry.actor,
+                "occurred_at": _iso_utc(entry.occurred_at),
+            }
+            for entry in entries
+        ],
+    }
+
+
 def _run_status(arguments: argparse.Namespace) -> int:
     """Report kill-switch and environment status without starting the application."""
     environment, environment_path = _environment_and_path(arguments)
@@ -125,24 +177,27 @@ def _run_status(arguments: argparse.Namespace) -> int:
     )
     document = application.kill_switch.snapshot()
     global_latched = any(record.scope is KillSwitchScope.GLOBAL for record in document.active)
+    kill_switch: dict[str, object] = {
+        "global_latched": global_latched,
+        "revision": document.revision,
+        "active": [
+            {
+                "record_id": str(record.record_id),
+                "scope": record.scope.value,
+                "target_id": record.target_id,
+                "reason": record.reason,
+                "latched_at": _iso_utc(record.latched_at),
+            }
+            for record in document.active
+        ],
+    }
+    if arguments.history:
+        kill_switch["history"] = _history_payload(document, arguments.history_limit)
     payload: dict[str, object] = {
         "status": "ok",
         "environment": environment.value,
         "broker_connectivity": False,
-        "kill_switch": {
-            "global_latched": global_latched,
-            "revision": document.revision,
-            "active": [
-                {
-                    "record_id": str(record.record_id),
-                    "scope": record.scope.value,
-                    "target_id": record.target_id,
-                    "reason": record.reason,
-                    "latched_at": _iso_utc(record.latched_at),
-                }
-                for record in document.active
-            ],
-        },
+        "kill_switch": kill_switch,
     }
     print(json.dumps(redact(payload), ensure_ascii=True, sort_keys=True))
     return 0
