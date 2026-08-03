@@ -1,0 +1,7 @@
+environment: live
+runtime:
+  state_directory: var/live
+  live_enabled: true
+kill_switch:
+  state_file: var/live/kill-switch.json
+

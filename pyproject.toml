@@ -1,0 +1,99 @@
+[build-system]
+requires = ["hatchling==1.28.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "trading-system"
+version = "0.1.0"
+description = "Security-first foundation for a multi-strategy trading system"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+authors = [{ name = "ScalpingBot contributors" }]
+dependencies = [
+    "pydantic==2.12.5",
+    "PyYAML==6.0.3",
+]
+
+[project.scripts]
+trading-cli = "trading_system.operations.cli:main"
+
+[dependency-groups]
+dev = [
+    "bandit[toml]>=1.8.6,<2",
+    "detect-secrets>=1.5.0,<2",
+    "mypy>=1.18.2,<2",
+    "pip-audit>=2.9.0,<3",
+    "pre-commit>=4.3.0,<5",
+    "pytest>=9.0.2,<10",
+    "pytest-cov>=7.0.0,<8",
+    "ruff>=0.14.10,<1",
+    "types-PyYAML>=6.0.12.20250915,<7",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/trading_system"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "tests", "scripts"]
+extend-exclude = ["docs"]
+
+[tool.ruff.lint]
+extend-ignore = ['PLR0913', 'TRY003', 'TRY301']
+select = [
+    "ASYNC",
+    "B",
+    "C4",
+    "DTZ",
+    "E",
+    "F",
+    "I",
+    "PERF",
+    "PIE",
+    "PL",
+    "PT",
+    "PTH",
+    "RUF",
+    "S",
+    "SIM",
+    "TRY",
+    "UP",
+    "W",
+]
+ignore = ["COM812", "D203", "D213"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+show_error_codes = true
+pretty = true
+mypy_path = "src"
+
+[tool.pytest.ini_options]
+minversion = "9.0"
+testpaths = ["tests"]
+addopts = ["--strict-config", "--strict-markers", "-ra"]
+
+[tool.coverage.run]
+branch = true
+source = ["trading_system"]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = true
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = []

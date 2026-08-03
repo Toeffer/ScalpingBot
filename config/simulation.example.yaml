@@ -1,0 +1,6 @@
+environment: simulation
+runtime:
+  state_directory: var/simulation
+kill_switch:
+  state_file: var/simulation/kill-switch.json
+

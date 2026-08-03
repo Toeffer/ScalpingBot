@@ -1,0 +1,345 @@
+{
+  "$defs": {
+    "AccountRiskConfig": {
+      "additionalProperties": false,
+      "description": "Account-level limits, all expressed in the configured base currency.",
+      "properties": {
+        "max_daily_loss": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Max Daily Loss",
+          "type": "string"
+        },
+        "max_gross_notional": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Max Gross Notional",
+          "type": "string"
+        },
+        "max_intraday_drawdown": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Max Intraday Drawdown",
+          "type": "string"
+        },
+        "max_net_notional": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Max Net Notional",
+          "type": "string"
+        },
+        "max_open_orders": {
+          "exclusiveMinimum": 0,
+          "title": "Max Open Orders",
+          "type": "integer"
+        },
+        "max_orders_per_minute": {
+          "exclusiveMinimum": 0,
+          "title": "Max Orders Per Minute",
+          "type": "integer"
+        },
+        "min_excess_liquidity": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Min Excess Liquidity",
+          "type": "string"
+        }
+      },
+      "required": [
+        "max_gross_notional",
+        "max_net_notional",
+        "max_daily_loss",
+        "max_intraday_drawdown",
+        "max_open_orders",
+        "max_orders_per_minute",
+        "min_excess_liquidity"
+      ],
+      "title": "AccountRiskConfig",
+      "type": "object"
+    },
+    "CurrencyRiskConfig": {
+      "additionalProperties": false,
+      "description": "Currency allowlist and FX freshness controls.",
+      "properties": {
+        "enabled_trading_currencies": {
+          "items": {
+            "pattern": "^[A-Z]{3}$",
+            "type": "string"
+          },
+          "title": "Enabled Trading Currencies",
+          "type": "array"
+        },
+        "fx_rate_max_age_ms": {
+          "exclusiveMinimum": 0,
+          "title": "Fx Rate Max Age Ms",
+          "type": "integer"
+        },
+        "max_fx_exposure_per_currency": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Max Fx Exposure Per Currency",
+          "type": "string"
+        }
+      },
+      "required": [
+        "enabled_trading_currencies",
+        "max_fx_exposure_per_currency",
+        "fx_rate_max_age_ms"
+      ],
+      "title": "CurrencyRiskConfig",
+      "type": "object"
+    },
+    "Environment": {
+      "description": "Deployment environments are explicit and never inferred from a port.",
+      "enum": [
+        "local",
+        "simulation",
+        "paper",
+        "live"
+      ],
+      "title": "Environment",
+      "type": "string"
+    },
+    "InstrumentRiskConfig": {
+      "additionalProperties": false,
+      "description": "Default limits per qualified instrument.",
+      "properties": {
+        "max_notional": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Max Notional",
+          "type": "string"
+        },
+        "max_position": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Max Position",
+          "type": "string"
+        },
+        "max_spread_bps": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Max Spread Bps",
+          "type": "string"
+        },
+        "max_working_quantity": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Max Working Quantity",
+          "type": "string"
+        }
+      },
+      "required": [
+        "max_position",
+        "max_notional",
+        "max_working_quantity",
+        "max_spread_bps"
+      ],
+      "title": "InstrumentRiskConfig",
+      "type": "object"
+    },
+    "KillSwitchConfig": {
+      "additionalProperties": false,
+      "description": "Durable, fail-closed emergency-state configuration.",
+      "properties": {
+        "fail_closed": {
+          "const": true,
+          "default": true,
+          "title": "Fail Closed",
+          "type": "boolean"
+        },
+        "state_file": {
+          "format": "path",
+          "title": "State File",
+          "type": "string"
+        }
+      },
+      "required": [
+        "state_file"
+      ],
+      "title": "KillSwitchConfig",
+      "type": "object"
+    },
+    "LogLevel": {
+      "description": "Allowed structured-log levels.",
+      "enum": [
+        "DEBUG",
+        "INFO",
+        "WARNING",
+        "ERROR",
+        "CRITICAL"
+      ],
+      "title": "LogLevel",
+      "type": "string"
+    },
+    "LoggingConfig": {
+      "additionalProperties": false,
+      "description": "Logging controls whose security features cannot be disabled.",
+      "properties": {
+        "destination": {
+          "const": "stdout",
+          "default": "stdout",
+          "title": "Destination",
+          "type": "string"
+        },
+        "format": {
+          "const": "json",
+          "default": "json",
+          "title": "Format",
+          "type": "string"
+        },
+        "level": {
+          "$ref": "#/$defs/LogLevel",
+          "default": "INFO"
+        },
+        "redaction_enabled": {
+          "const": true,
+          "default": true,
+          "title": "Redaction Enabled",
+          "type": "boolean"
+        }
+      },
+      "title": "LoggingConfig",
+      "type": "object"
+    },
+    "MarketDataRiskConfig": {
+      "additionalProperties": false,
+      "description": "Freshness and time-synchronization limits.",
+      "properties": {
+        "max_clock_skew_ms": {
+          "exclusiveMinimum": 0,
+          "title": "Max Clock Skew Ms",
+          "type": "integer"
+        },
+        "max_quote_age_ms": {
+          "exclusiveMinimum": 0,
+          "title": "Max Quote Age Ms",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_quote_age_ms",
+        "max_clock_skew_ms"
+      ],
+      "title": "MarketDataRiskConfig",
+      "type": "object"
+    },
+    "OrderRiskConfig": {
+      "additionalProperties": false,
+      "description": "Limits for one proposed order.",
+      "properties": {
+        "max_notional": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Max Notional",
+          "type": "string"
+        },
+        "max_price_deviation_bps": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Max Price Deviation Bps",
+          "type": "string"
+        },
+        "max_quantity": {
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Max Quantity",
+          "type": "string"
+        }
+      },
+      "required": [
+        "max_quantity",
+        "max_notional",
+        "max_price_deviation_bps"
+      ],
+      "title": "OrderRiskConfig",
+      "type": "object"
+    },
+    "RiskConfig": {
+      "additionalProperties": false,
+      "description": "Phase-0 validated risk configuration.",
+      "properties": {
+        "account": {
+          "$ref": "#/$defs/AccountRiskConfig"
+        },
+        "base_currency": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Base Currency",
+          "type": "string"
+        },
+        "currency": {
+          "$ref": "#/$defs/CurrencyRiskConfig"
+        },
+        "market_data": {
+          "$ref": "#/$defs/MarketDataRiskConfig"
+        },
+        "per_instrument": {
+          "$ref": "#/$defs/InstrumentRiskConfig"
+        },
+        "per_order": {
+          "$ref": "#/$defs/OrderRiskConfig"
+        }
+      },
+      "required": [
+        "base_currency",
+        "account",
+        "per_instrument",
+        "per_order",
+        "currency",
+        "market_data"
+      ],
+      "title": "RiskConfig",
+      "type": "object"
+    },
+    "RuntimeConfig": {
+      "additionalProperties": false,
+      "description": "Process identity and mutable-state location.",
+      "properties": {
+        "live_enabled": {
+          "default": false,
+          "title": "Live Enabled",
+          "type": "boolean"
+        },
+        "service_name": {
+          "default": "trading-engine",
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9_-]*$",
+          "title": "Service Name",
+          "type": "string"
+        },
+        "state_directory": {
+          "format": "path",
+          "title": "State Directory",
+          "type": "string"
+        }
+      },
+      "required": [
+        "state_directory"
+      ],
+      "title": "RuntimeConfig",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Complete configuration input to the Phase-0 application.",
+  "properties": {
+    "environment": {
+      "$ref": "#/$defs/Environment"
+    },
+    "kill_switch": {
+      "$ref": "#/$defs/KillSwitchConfig"
+    },
+    "logging": {
+      "$ref": "#/$defs/LoggingConfig"
+    },
+    "risk": {
+      "$ref": "#/$defs/RiskConfig"
+    },
+    "runtime": {
+      "$ref": "#/$defs/RuntimeConfig"
+    },
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema_version",
+    "environment",
+    "runtime",
+    "logging",
+    "kill_switch",
+    "risk"
+  ],
+  "title": "TradingConfig",
+  "type": "object"
+}

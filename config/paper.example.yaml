@@ -1,0 +1,6 @@
+environment: paper
+runtime:
+  state_directory: var/paper
+kill_switch:
+  state_file: var/paper/kill-switch.json
+

@@ -1,0 +1,41 @@
+schema_version: 1
+runtime:
+  service_name: trading-engine
+  state_directory: var/simulation
+  live_enabled: false
+logging:
+  level: INFO
+  destination: stdout
+  format: json
+  redaction_enabled: true
+kill_switch:
+  state_file: var/simulation/kill-switch.json
+  fail_closed: true
+risk:
+  base_currency: EUR
+  account:
+    max_gross_notional: "25000.00"
+    max_net_notional: "15000.00"
+    max_daily_loss: "250.00"
+    max_intraday_drawdown: "300.00"
+    max_open_orders: 10
+    max_orders_per_minute: 20
+    min_excess_liquidity: "5000.00"
+  per_instrument:
+    max_position: "100"
+    max_notional: "10000.00"
+    max_working_quantity: "100"
+    max_spread_bps: "15"
+  per_order:
+    max_quantity: "25"
+    max_notional: "5000.00"
+    max_price_deviation_bps: "20"
+  currency:
+    enabled_trading_currencies:
+      - EUR
+    max_fx_exposure_per_currency: "0.00"
+    fx_rate_max_age_ms: 60000
+  market_data:
+    max_quote_age_ms: 1000
+    max_clock_skew_ms: 500
+

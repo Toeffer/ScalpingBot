@@ -1,0 +1,75 @@
+name: Phase 0 quality and security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase-0-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONHASHSEED: "0"
+  UV_FROZEN: "true"
+  UV_NO_PROGRESS: "true"
+
+jobs:
+  quality:
+    name: Quality gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out reviewed source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.12.1"
+          enable-cache: false
+      - name: Verify lockfile
+        run: uv lock --check
+      - name: Install frozen environment
+        run: uv sync --frozen
+      - name: Lint
+        run: uv run ruff check .
+      - name: Check formatting
+        run: uv run ruff format --check .
+      - name: Check strict types
+        run: uv run mypy --strict src
+      - name: Run tests with branch coverage
+        run: uv run pytest --cov=trading_system --cov-branch --cov-report=term-missing
+      - name: Verify generated schema
+        run: uv run python scripts/generate_config_schema.py --check
+      - name: Verify release invariants
+        run: uv run python scripts/verify_release.py
+
+  security:
+    name: Security gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out reviewed source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.12.1"
+          enable-cache: false
+      - name: Install frozen environment
+        run: uv sync --frozen
+      - name: Scan tracked files for secrets
+        run: uv run pre-commit run detect-secrets --all-files
+      - name: Prove the secret scanner rejects a synthetic key
+        run: uv run python scripts/verify_secret_scan.py
+      - name: Run static security analysis
+        run: uv run bandit -c pyproject.toml -r src scripts
+      - name: Audit locked dependencies
+        run: uv run pip-audit --skip-editable

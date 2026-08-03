@@ -1,0 +1,6 @@
+environment: local
+runtime:
+  state_directory: var/local
+kill_switch:
+  state_file: var/local/kill-switch.json
+
