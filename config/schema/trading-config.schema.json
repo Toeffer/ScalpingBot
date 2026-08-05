@@ -52,6 +52,83 @@
       "title": "AccountRiskConfig",
       "type": "object"
     },
+    "BrokerConfig": {
+      "additionalProperties": false,
+      "description": "Paper broker identity; credentials never belong in this model.",
+      "properties": {
+        "execution_client_id": {
+          "default": 1,
+          "exclusiveMinimum": 0,
+          "title": "Execution Client Id",
+          "type": "integer"
+        },
+        "expected_account_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expected Account Hash"
+        },
+        "expected_base_currency": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z]{3}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expected Base Currency"
+        },
+        "host": {
+          "default": "127.0.0.1",
+          "enum": [
+            "127.0.0.1",
+            "localhost"
+          ],
+          "title": "Host",
+          "type": "string"
+        },
+        "market_data_line_capacity": {
+          "default": 1,
+          "exclusiveMinimum": 0,
+          "title": "Market Data Line Capacity",
+          "type": "integer"
+        },
+        "max_event_queue_size": {
+          "default": 1000,
+          "exclusiveMinimum": 0,
+          "title": "Max Event Queue Size",
+          "type": "integer"
+        },
+        "observer_client_id": {
+          "default": 2,
+          "exclusiveMinimum": 0,
+          "title": "Observer Client Id",
+          "type": "integer"
+        },
+        "port": {
+          "default": 4002,
+          "exclusiveMinimum": 0,
+          "title": "Port",
+          "type": "integer"
+        },
+        "read_only_required": {
+          "default": true,
+          "title": "Read Only Required",
+          "type": "boolean"
+        }
+      },
+      "title": "BrokerConfig",
+      "type": "object"
+    },
     "CurrencyRiskConfig": {
       "additionalProperties": false,
       "description": "Currency allowlist and FX freshness controls.",
@@ -214,6 +291,25 @@
       "title": "MarketDataRiskConfig",
       "type": "object"
     },
+    "OperationsConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "notification_endpoint_secret_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notification Endpoint Secret Ref"
+        }
+      },
+      "title": "OperationsConfig",
+      "type": "object"
+    },
     "OrderRiskConfig": {
       "additionalProperties": false,
       "description": "Limits for one proposed order.",
@@ -240,6 +336,118 @@
         "max_price_deviation_bps"
       ],
       "title": "OrderRiskConfig",
+      "type": "object"
+    },
+    "PaperInstrumentConfig": {
+      "additionalProperties": false,
+      "description": "Exactly one explicitly qualified base-currency cash instrument in v1.",
+      "properties": {
+        "con_id": {
+          "exclusiveMinimum": 0,
+          "title": "Con Id",
+          "type": "integer"
+        },
+        "currency": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Currency",
+          "type": "string"
+        },
+        "exchange": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Exchange",
+          "type": "string"
+        },
+        "instrument_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "regular_session_close": {
+          "default": "17:30",
+          "pattern": "^\\d{2}:\\d{2}$",
+          "title": "Regular Session Close",
+          "type": "string"
+        },
+        "regular_session_open": {
+          "default": "09:00",
+          "pattern": "^\\d{2}:\\d{2}$",
+          "title": "Regular Session Open",
+          "type": "string"
+        },
+        "timezone": {
+          "default": "Europe/Berlin",
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Timezone",
+          "type": "string"
+        }
+      },
+      "required": [
+        "instrument_id",
+        "con_id",
+        "exchange",
+        "currency"
+      ],
+      "title": "PaperInstrumentConfig",
+      "type": "object"
+    },
+    "PaperProbeConfig": {
+      "additionalProperties": false,
+      "description": "Paper-only integration probe, disabled unless explicitly enabled.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "entry_time": {
+          "default": "10:00",
+          "pattern": "^\\d{2}:\\d{2}$",
+          "title": "Entry Time",
+          "type": "string"
+        },
+        "exit_time": {
+          "default": "10:05",
+          "pattern": "^\\d{2}:\\d{2}$",
+          "title": "Exit Time",
+          "type": "string"
+        },
+        "quantity": {
+          "default": "1",
+          "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+          "title": "Quantity",
+          "type": "string"
+        }
+      },
+      "title": "PaperProbeConfig",
+      "type": "object"
+    },
+    "PersistenceConfig": {
+      "additionalProperties": false,
+      "description": "Only a secret reference is configured; never a database password.",
+      "properties": {
+        "database_url_secret_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Database Url Secret Ref"
+        },
+        "migration_required": {
+          "const": true,
+          "default": true,
+          "title": "Migration Required",
+          "type": "boolean"
+        }
+      },
+      "title": "PersistenceConfig",
       "type": "object"
     },
     "RiskConfig": {
@@ -311,6 +519,20 @@
   "additionalProperties": false,
   "description": "Complete configuration input to the Phase-0 application.",
   "properties": {
+    "broker": {
+      "$ref": "#/$defs/BrokerConfig",
+      "default": {
+        "execution_client_id": 1,
+        "expected_account_hash": null,
+        "expected_base_currency": null,
+        "host": "127.0.0.1",
+        "market_data_line_capacity": 1,
+        "max_event_queue_size": 1000,
+        "observer_client_id": 2,
+        "port": 4002,
+        "read_only_required": true
+      }
+    },
     "environment": {
       "$ref": "#/$defs/Environment"
     },
@@ -319,6 +541,39 @@
     },
     "logging": {
       "$ref": "#/$defs/LoggingConfig"
+    },
+    "operations": {
+      "$ref": "#/$defs/OperationsConfig",
+      "default": {
+        "notification_endpoint_secret_ref": null
+      }
+    },
+    "paper_instrument": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PaperInstrumentConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "paper_probe": {
+      "$ref": "#/$defs/PaperProbeConfig",
+      "default": {
+        "enabled": false,
+        "entry_time": "10:00",
+        "exit_time": "10:05",
+        "quantity": "1"
+      }
+    },
+    "persistence": {
+      "$ref": "#/$defs/PersistenceConfig",
+      "default": {
+        "database_url_secret_ref": null,
+        "migration_required": true
+      }
     },
     "risk": {
       "$ref": "#/$defs/RiskConfig"

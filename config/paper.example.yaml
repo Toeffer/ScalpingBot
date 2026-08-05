@@ -3,4 +3,30 @@ runtime:
   state_directory: var/paper
 kill_switch:
   state_file: var/paper/kill-switch.json
-
+broker:
+  host: 127.0.0.1
+  port: 4002
+  execution_client_id: 1
+  observer_client_id: 2
+  expected_account_hash: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  expected_base_currency: EUR
+  read_only_required: true
+  market_data_line_capacity: 1
+  max_event_queue_size: 1000
+paper_instrument:
+  instrument_id: REPLACE_WITH_APPROVED_EUR_INSTRUMENT
+  con_id: 1
+  exchange: REPLACE_WITH_APPROVED_EXCHANGE
+  currency: EUR
+  timezone: Europe/Berlin
+  regular_session_open: "09:00"
+  regular_session_close: "17:30"
+paper_probe:
+  enabled: false
+  quantity: "1"
+  entry_time: "10:00"
+  exit_time: "10:05"
+persistence:
+  database_url_secret_ref: paper-postgres
+operations:
+  notification_endpoint_secret_ref: paper-alerts

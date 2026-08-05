@@ -210,6 +210,58 @@ class MarketDataRiskConfig(StrictModel):
     max_clock_skew_ms: PositiveInt
 
 
+class BrokerConfig(StrictModel):
+    """Paper broker identity; credentials never belong in this model."""
+
+    host: Literal["127.0.0.1", "localhost"] = "127.0.0.1"
+    port: PositiveInt = 4002
+    execution_client_id: PositiveInt = 1
+    observer_client_id: PositiveInt = 2
+    expected_account_hash: str | None = None
+    expected_base_currency: CurrencyCode | None = None
+    read_only_required: bool = True
+    market_data_line_capacity: PositiveInt = 1
+    max_event_queue_size: PositiveInt = 1_000
+
+    @model_validator(mode="after")
+    def require_distinct_clients(self) -> BrokerConfig:
+        if self.execution_client_id == self.observer_client_id:
+            raise ValueError("execution_client_id and observer_client_id must differ")
+        return self
+
+
+class PaperInstrumentConfig(StrictModel):
+    """Exactly one explicitly qualified base-currency cash instrument in v1."""
+
+    instrument_id: Annotated[str, Field(min_length=1, max_length=64)]
+    con_id: PositiveInt
+    exchange: Annotated[str, Field(min_length=1, max_length=32)]
+    currency: CurrencyCode
+    timezone: Annotated[str, Field(min_length=1, max_length=64)] = "Europe/Berlin"
+    regular_session_open: Annotated[str, Field(pattern=r"^\d{2}:\d{2}$")] = "09:00"
+    regular_session_close: Annotated[str, Field(pattern=r"^\d{2}:\d{2}$")] = "17:30"
+
+
+class PaperProbeConfig(StrictModel):
+    """Paper-only integration probe, disabled unless explicitly enabled."""
+
+    enabled: bool = False
+    quantity: PositiveDecimal = Decimal("1")
+    entry_time: Annotated[str, Field(pattern=r"^\d{2}:\d{2}$")] = "10:00"
+    exit_time: Annotated[str, Field(pattern=r"^\d{2}:\d{2}$")] = "10:05"
+
+
+class PersistenceConfig(StrictModel):
+    """Only a secret reference is configured; never a database password."""
+
+    database_url_secret_ref: str | None = None
+    migration_required: Literal[True] = True
+
+
+class OperationsConfig(StrictModel):
+    notification_endpoint_secret_ref: str | None = None
+
+
 class RiskConfig(StrictModel):
     """Phase-0 validated risk configuration."""
 
@@ -237,12 +289,34 @@ class TradingConfig(StrictModel):
     logging: LoggingConfig
     kill_switch: KillSwitchConfig
     risk: RiskConfig
+    broker: BrokerConfig = BrokerConfig()
+    paper_instrument: PaperInstrumentConfig | None = None
+    paper_probe: PaperProbeConfig = PaperProbeConfig()
+    persistence: PersistenceConfig = PersistenceConfig()
+    operations: OperationsConfig = OperationsConfig()
 
     @model_validator(mode="after")
     def prevent_cross_environment_live_flag(self) -> TradingConfig:
         if self.runtime.live_enabled and self.environment is not Environment.LIVE:
             raise ValueError("live_enabled is valid only in the live environment")
         return self
+
+    def paper_readiness_failures(self) -> tuple[str, ...]:
+        """Return configuration-only paper blockers without opening a socket."""
+        if self.environment is not Environment.PAPER:
+            return ()
+        failures: list[str] = []
+        if self.paper_instrument is None:
+            failures.append("paper_instrument_not_configured")
+        elif self.paper_instrument.currency != self.risk.base_currency:
+            failures.append("paper_instrument_not_in_base_currency")
+        if self.broker.expected_account_hash is None:
+            failures.append("expected_account_hash_not_configured")
+        if self.broker.expected_base_currency != self.risk.base_currency:
+            failures.append("broker_base_currency_not_configured")
+        if self.persistence.database_url_secret_ref is None:
+            failures.append("database_secret_reference_not_configured")
+        return tuple(failures)
 
     def canonical_hash(self) -> str:
         """Return the configuration digest recorded in startup audit data (§15.6)."""

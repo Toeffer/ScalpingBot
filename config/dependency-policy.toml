@@ -11,6 +11,10 @@ allowed_licenses = [
 denied_licenses = ["AGPL-3.0-only", "AGPL-3.0-or-later", "GPL-3.0-only", "GPL-3.0-or-later"]
 
 [runtime_packages]
+alembic = "MIT"
+asyncpg = "Apache-2.0"
+prometheus-client = "Apache-2.0"
 pydantic = "MIT"
 pyyaml = "MIT"
+sqlalchemy = "MIT"
 

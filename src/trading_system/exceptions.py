@@ -27,3 +27,19 @@ class KillSwitchPersistenceError(TradingSystemError):
 
 class KillSwitchLatchedError(TradingSystemError):
     """Startup was blocked by a durable kill-switch latch."""
+
+
+class PaperReadinessError(TradingSystemError):
+    """Paper trading was requested before all mandatory controls were ready."""
+
+
+class ReconciliationError(TradingSystemError):
+    """Broker and durable local state could not be explained safely."""
+
+
+class RiskRejectedError(TradingSystemError):
+    """A centrally evaluated order plan was rejected."""
+
+
+class OrderStateError(TradingSystemError):
+    """An order lifecycle transition violates the state machine."""

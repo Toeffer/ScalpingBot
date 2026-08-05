@@ -88,7 +88,7 @@ def main() -> int:
         for failure in failures:
             print(f"FAIL: {failure}")
         return 1
-    print("Phase-0 release verification passed")
+    print("release verification passed")
     return 0
 
 

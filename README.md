@@ -26,6 +26,16 @@ readiness.
   static security analysis, and a secret-scanner self-test.
 - A Phase-0 threat model and release verifier.
 
+## Paper-runtime foundation
+
+The repository now includes a fail-closed paper-runtime foundation: strict
+paper configuration, an IBKR observer transport boundary, PostgreSQL event
+journal migration, idempotent OMS preparation, central pre-trade risk checks,
+and a disabled lifecycle-probe strategy. It will not open a Gateway connection
+until an operator installs and locks the official TWS API distribution matching
+the deployed Gateway, configures the paper account and PostgreSQL secret
+references, and supplies the injected transport. See
+[`deploy/runbooks/paper-runtime.md`](deploy/runbooks/paper-runtime.md).
 ## Setup
 
 Python 3.12 or later and uv are required.

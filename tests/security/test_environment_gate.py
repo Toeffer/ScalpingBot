@@ -13,6 +13,7 @@ from trading_system.exceptions import (
     DecimalContextError,
     EnvironmentUnavailableError,
     KillSwitchLatchedError,
+    PaperReadinessError,
 )
 from trading_system.risk.kill_switch import FileKillSwitchStore, KillSwitchScope
 
@@ -44,7 +45,7 @@ def test_live_cannot_start_even_when_config_flag_is_true(tmp_path: Path) -> None
     assert application.state is SystemState.HALTED
 
 
-def test_paper_cannot_start_without_broker_phase(tmp_path: Path) -> None:
+def test_paper_fails_closed_without_readiness_dependencies(tmp_path: Path) -> None:
     environment_path = write_environment_config(tmp_path, "paper")
     application = TradingApplication.bootstrap(
         DEFAULTS_PATH,
@@ -53,7 +54,7 @@ def test_paper_cannot_start_without_broker_phase(tmp_path: Path) -> None:
         log_stream=io.StringIO(),
     )
 
-    with pytest.raises(EnvironmentUnavailableError, match="no broker connectivity"):
+    with pytest.raises(PaperReadinessError, match="paper_instrument_not_configured"):
         application.start()
     assert application.state is SystemState.HALTED
 
